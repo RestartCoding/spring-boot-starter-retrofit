@@ -7,6 +7,12 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author xiabiao
@@ -24,8 +30,26 @@ public class RetrofitScanRegister implements ImportBeanDefinitionRegistrar {
     if (attributes != null) {
       BeanDefinitionBuilder builder =
           BeanDefinitionBuilder.genericBeanDefinition(RetrofitScanConfigure.class);
-      builder.addPropertyValue(
-          "basePackage", ClassUtils.getPackageName(importingClassMetadata.getClassName()));
+      List<String> basePackages = new ArrayList<>();
+      basePackages.addAll(
+          Arrays.stream(attributes.getStringArray("value"))
+              .filter(StringUtils::hasText)
+              .collect(Collectors.toList()));
+
+      basePackages.addAll(
+          Arrays.stream(attributes.getStringArray("basePackages"))
+              .filter(StringUtils::hasText)
+              .collect(Collectors.toList()));
+
+      basePackages.addAll(
+          Arrays.stream(attributes.getClassArray("basePackageClasses"))
+              .map(ClassUtils::getPackageName)
+              .collect(Collectors.toList()));
+
+      if (basePackages.isEmpty()) {
+        basePackages.add(ClassUtils.getPackageName(importingClassMetadata.getClassName()));
+      }
+      builder.addPropertyValue("basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
       registry.registerBeanDefinition(
           RetrofitScanConfigure.class.getName(), builder.getBeanDefinition());
     }
