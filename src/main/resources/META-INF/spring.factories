@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.hikvision.spring.boot.retrofit.starter.config.RetrofitAutoConfiguration
