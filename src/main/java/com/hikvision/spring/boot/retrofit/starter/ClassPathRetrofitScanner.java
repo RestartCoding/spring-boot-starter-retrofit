@@ -1,7 +1,6 @@
 package com.hikvision.spring.boot.retrofit.starter;
 
 import com.hikvision.spring.boot.retrofit.starter.enums.RetrofitClient;
-import okhttp3.Interceptor;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
@@ -10,9 +9,13 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
 import retrofit2.Converter;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * @author xiabiao
@@ -63,15 +66,36 @@ class ClassPathRetrofitScanner extends ClassPathBeanDefinitionScanner {
       RetrofitClient retrofitClient = clazz.getAnnotation(RetrofitClient.class);
       beanDefinition.setBeanClass(RetrofitFactoryBean.class);
       beanDefinition.getPropertyValues().add("clazz", clazz);
-      beanDefinition.getPropertyValues().add("baseUrl", retrofitClient.baseUrl());
-      beanDefinition
-          .getPropertyValues()
-          .add("interceptors", new RuntimeBeanReference(Interceptor.class));
+      String baseUrl = getBaseUrl(retrofitClient);
+      beanDefinition.getPropertyValues().add("baseUrl", baseUrl);
       beanDefinition
           .getPropertyValues()
           .add("converterFactory", new RuntimeBeanReference(Converter.Factory.class));
+
+      beanDefinition.getPropertyValues().add("interceptors", retrofitClient.interceptors());
+
       assert registry != null;
       registry.registerBeanDefinition(beanDefinition.getBeanClassName(), beanDefinition);
     }
+  }
+
+  private String getBaseUrl(RetrofitClient retrofitClient) {
+    String baseUrl = retrofitClient.baseUrl();
+    if (ObjectUtils.isEmpty(baseUrl) && retrofitClient.baseUrlClass().length > 0) {
+      try {
+        Constructor<? extends Supplier<String>> constructor =
+            retrofitClient.baseUrlClass()[0].getDeclaredConstructor();
+        baseUrl = constructor.newInstance().get();
+      } catch (NoSuchMethodException
+          | InstantiationException
+          | IllegalAccessException
+          | InvocationTargetException e) {
+        e.printStackTrace();
+      }
+    }
+    if (ObjectUtils.isEmpty(baseUrl)) {
+      throw new IllegalStateException("Base url can not be empty.");
+    }
+    return baseUrl;
   }
 }

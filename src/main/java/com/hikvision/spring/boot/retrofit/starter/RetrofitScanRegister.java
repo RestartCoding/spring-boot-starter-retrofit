@@ -49,7 +49,9 @@ public class RetrofitScanRegister implements ImportBeanDefinitionRegistrar {
       if (basePackages.isEmpty()) {
         basePackages.add(ClassUtils.getPackageName(importingClassMetadata.getClassName()));
       }
-      builder.addPropertyValue("basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
+      builder.addPropertyValue(
+          "basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
+
       registry.registerBeanDefinition(
           RetrofitScanConfigure.class.getName(), builder.getBeanDefinition());
     }

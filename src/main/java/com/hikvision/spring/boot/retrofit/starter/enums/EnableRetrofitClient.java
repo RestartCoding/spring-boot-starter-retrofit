@@ -15,4 +15,11 @@ import java.lang.annotation.Target;
 @Import(RetrofitScanRegister.class)
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnableRetrofitClient {}
+public @interface EnableRetrofitClient {
+
+  String[] value() default {};
+
+  String[] basePackages() default {};
+
+  Class<?>[] basePackageClasses() default {};
+}

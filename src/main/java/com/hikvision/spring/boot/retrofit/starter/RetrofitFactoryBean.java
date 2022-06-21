@@ -18,16 +18,17 @@ public class RetrofitFactoryBean<T> implements FactoryBean<T> {
 
   private String baseUrl;
 
-  private List<Interceptor> interceptors;
-
   private Converter.Factory converterFactory;
+
+  private List<Class<? extends Interceptor>> interceptors;
 
   @Override
   public T getObject() throws Exception {
     OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-    for (Interceptor interceptor : interceptors) {
-      clientBuilder.addInterceptor(interceptor);
+    for (Class<? extends Interceptor> interceptor : interceptors) {
+      clientBuilder.addInterceptor(interceptor.getDeclaredConstructor().newInstance());
     }
+
     Retrofit.Builder builder = new Retrofit.Builder();
     builder.baseUrl(baseUrl);
     builder.client(clientBuilder.build());
@@ -57,11 +58,11 @@ public class RetrofitFactoryBean<T> implements FactoryBean<T> {
     this.baseUrl = baseUrl;
   }
 
-  public List<Interceptor> getInterceptors() {
+  public List<Class<? extends Interceptor>> getInterceptors() {
     return interceptors;
   }
 
-  public void setInterceptors(List<Interceptor> interceptors) {
+  public void setInterceptors(List<Class<? extends Interceptor>> interceptors) {
     this.interceptors = interceptors;
   }
 
